@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pippolo</title>
+
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="./js/app.js" defer></script>
+</head>
+<body>
+
+  <input type="button" value="reset" id="resetBtn">
+
+  <br>
+
+  <small>
+    <ul>
+      <li>per modificare una lista o una nota, clicca sul suo nome/contenuto</li>
+      <li>per aggiungere una nota, cliccare sull'id della lista corrispondente</li>
+      <li>per modificare uno status, cliccare sullo status corrispondente</li>
+    </ul>
+  </small>
+
+  <div class="inputs">
+    <input class="toHide hidden" type="text" placeholder="Nome Lista" id="listNameField">
+    <input class="toHide hidden" type="button" value="[+] LISTA" id="addListButton">
+    <input class="toHide hidden" type="button" value="Conferma" id="addListConfirm">
+
+    <input class="toHide hidden" type="text" placeholder="Contenuto Note" id="notesContentField">
+    <input class="toHide hidden" type="button" value="Aggiungi" id="addNoteButton">
+    <input class="toHide hidden" type="button" value="Elimina" id="delNoteButton">
+  </div>
+
+  <div class="tables">
+    <table id="result1"></table>
+    <table id="result2"></table>
+  </div>
+
+</body>
+</html>

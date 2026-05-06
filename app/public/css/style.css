@@ -1,0 +1,40 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+table {
+  margin: 5px;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 2px solid #000;
+  text-align: center;
+  padding: 5px;
+}
+
+.tables {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-around;
+  align-items: flex-start;
+}
+
+.inputs {
+  margin: 10px;
+  gap: 10px;
+
+  display: grid;
+  grid-template-columns: auto auto;
+
+  width: 50%;
+}
+
+.hidden {
+  display: none;
+}
+
+#resetBtn {
+  width: 60px;
+}
