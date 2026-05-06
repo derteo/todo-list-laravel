@@ -9,14 +9,14 @@ class NoteController extends Controller
 {
     public function index()
     {
-        return Note::all();
+        return Note::where("paranoid", 0)->get();
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             "content" => ["required", "string"],
-            "todo" => ["required", "integer"],
+            "todo" => ["required", "string"],
             "paranoid" => ["required", "integer"],
             "checklist_id" => ["required", "integer"]
         ]);
@@ -34,7 +34,7 @@ class NoteController extends Controller
     {
         $validated = $request->validate([
             "content" => ["sometimes", "required", "string"],
-            "todo" => ["sometimes", "required", "integer"],
+            "todo" => ["sometimes", "required", "string"],
             "paranoid" => ["sometimes", "required", "integer"],
             "checklist_id" => ["sometimes", "required", "integer"]
         ]);

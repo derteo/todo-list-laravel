@@ -9,7 +9,7 @@ class ChecklistController extends Controller
 {
     public function index()
     {
-        return Checklist::with("notes")->get();
+        return Checklist::with("notes")->where("paranoid", 0)->get();
     }
 
     public function store(Request $request)
