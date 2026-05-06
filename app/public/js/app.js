@@ -1,5 +1,5 @@
 const PORT = 8000;
-const API_HOST = "http://localhost:" + PORT;
+const API_HOST = "http://localhost:" + PORT + "/api";
 
 /* COSTANTI */
 const listNameField = document.getElementById("listNameField");
@@ -38,7 +38,7 @@ function clear(string) {
 }
 
 /* CHIAMATE GET */
-async function getLists() {
+async function getChecklists() {
     listsTable.innerHTML = "";
 
     const trH = document.createElement("tr");
@@ -53,7 +53,7 @@ async function getLists() {
     trH.append(thId, thName, thDel);
     listsTable.append(trH);
 
-    const data = await apiRequest(API_HOST + "/lists", "GET", null);
+    const data = await apiRequest(API_HOST + "/checklists", "GET", null);
 
     Array.from(data).forEach((value, index) => {
         const tr = document.createElement("tr");
@@ -96,12 +96,12 @@ async function getLists() {
 
                     const body = { name: input.value };
                     await apiRequest(
-                        API_HOST + "/list/" + value.id,
+                        API_HOST + "/checklists/" + value.id,
                         "PUT",
                         body,
                     );
 
-                    await getLists();
+                    await getChecklists();
                 }
 
                 if (e.key === "Escape") {
@@ -124,9 +124,15 @@ async function getLists() {
         delBtn.style.cursor = "pointer";
 
         delBtn.addEventListener("click", async () => {
-            await apiRequest(API_HOST + "/list/" + value.id, "DELETE", null);
 
-            await getLists();
+            body = { paranoid: 1 };
+            await apiRequest(
+                API_HOST + "/checklists/" + value.id,
+                "PUT",
+                body,
+            );
+
+            await getChecklists();
             await getNotes();
             await reset();
         });
@@ -193,7 +199,7 @@ async function getNotes() {
 
                     const body = { content: input.value };
                     await apiRequest(
-                        API_HOST + "/note/" + value.id + "/content",
+                        API_HOST + "/notes/" + value.id,
                         "PUT",
                         body,
                     );
@@ -208,7 +214,7 @@ async function getNotes() {
             });
         });
 
-        tdLista.textContent = value.lists_id;
+        tdLista.textContent = value.checklist_id;
 
         tdTodo.textContent = value.todo;
         tdTodo.style.cursor = "pointer";
@@ -219,7 +225,7 @@ async function getNotes() {
                     todo: "done",
                 };
                 await apiRequest(
-                    API_HOST + "/note/" + value.id + "/todo",
+                    API_HOST + "/notes/" + value.id,
                     "PUT",
                     body,
                 );
@@ -228,7 +234,7 @@ async function getNotes() {
                     todo: "todo",
                 };
                 await apiRequest(
-                    API_HOST + "/note/" + value.id + "/todo",
+                    API_HOST + "/notes/" + value.id,
                     "PUT",
                     body,
                 );
@@ -242,9 +248,12 @@ async function getNotes() {
         delBtn.style.cursor = "pointer";
 
         delBtn.addEventListener("click", async () => {
-            await apiRequest(API_HOST + "/note/" + value.id, "DELETE", null);
 
-            await getLists();
+            body = { paranoid: 1 };
+
+            await apiRequest(API_HOST + "/notes/" + value.id, "PUT", body);
+
+            await getChecklists();
             await getNotes();
             await reset();
         });
@@ -258,7 +267,7 @@ async function getNotes() {
 
 async function reset() {
     clear("reset");
-    await getLists();
+    await getChecklists();
     await getNotes();
 }
 
@@ -276,10 +285,11 @@ addNoteButton.addEventListener("click", async () => {
     body = {
         content: notesContentField.value,
         todo: "todo",
-        lists_id: idLista,
+        checklist_id: idLista,
+        paranoid: 0,
     };
 
-    await apiRequest(API_HOST + "/note", "POST", body);
+    await apiRequest(API_HOST + "/notes", "POST", body);
 
     notesContentField.value = "";
 
@@ -293,9 +303,12 @@ addListButton.addEventListener("click", () => {
 addListConfirm.addEventListener("click", async () => {
     if (listNameField.value == "") return console.log("nome lista non valido!");
 
-    body = { name: listNameField.value };
+    body = {
+        name: listNameField.value,
+        paranoid: 0,
+    };
 
-    await apiRequest(API_HOST + "/list", "POST", body);
+    await apiRequest(API_HOST + "/checklists", "POST", body);
 
     listNameField.value = "";
 
