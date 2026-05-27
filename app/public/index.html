@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>pippolo</title>
-
   <link rel="stylesheet" href="./css/style.css">
   <script src="./js/app.js" defer></script>
 </head>
@@ -12,12 +11,11 @@
 
   <input type="button" value="reset" id="resetBtn">
 
-  <br>
-
   <small>
     <ul>
       <li>per modificare una lista o una nota, clicca sul suo nome/contenuto</li>
-      <li>per aggiungere una nota, cliccare sull'id della lista corrispondente</li>
+      <li>per filtrare le note per lista, usa il menu a tendina sopra la tabella note</li>
+      <li>per aggiungere una nota, seleziona prima una lista dal menu a tendina</li>
       <li>per modificare uno status, cliccare sullo status corrispondente</li>
     </ul>
   </small>
@@ -26,15 +24,30 @@
     <input class="toHide hidden" type="text" placeholder="Nome Lista" id="listNameField">
     <input class="toHide hidden" type="button" value="[+] LISTA" id="addListButton">
     <input class="toHide hidden" type="button" value="Conferma" id="addListConfirm">
+    <input class="toHide hidden" type="button" value="Elimina" id="delListButton">
 
-    <input class="toHide hidden" type="text" placeholder="Contenuto Note" id="notesContentField">
-    <input class="toHide hidden" type="button" value="Aggiungi" id="addNoteButton">
+    <!-- tenuti nascosti per compatibilità JS, non usati direttamente -->
     <input class="toHide hidden" type="button" value="Elimina" id="delNoteButton">
   </div>
 
   <div class="tables">
     <table id="result1"></table>
-    <table id="result2"></table>
+
+    <div class="notes-panel">
+      <div class="notes-toolbar">
+        <select id="listFilterSelect">
+          <option value="">Tutte le liste</option>
+        </select>
+      </div>
+
+      <div id="addNoteSection" class="hidden add-note-row">
+        <span id="addNoteLabel" class="add-note-label"></span>
+        <input type="text" placeholder="Contenuto nota..." id="notesContentField">
+        <input type="button" value="Aggiungi" id="addNoteButton">
+      </div>
+
+      <table id="result2"></table>
+    </div>
   </div>
 
 </body>

@@ -9,7 +9,7 @@ class NoteController extends Controller
 {
     public function index()
     {
-        return Note::where("paranoid", 0)->get();
+        return Note::where("paranoid", 0)->with("checklist")->get();
     }
 
     public function store(Request $request)

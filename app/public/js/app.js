@@ -4,8 +4,8 @@ const API_HOST = "http://localhost:" + PORT + "/api";
 /* COSTANTI */
 const listNameField = document.getElementById("listNameField");
 const addListButton = document.getElementById("addListButton");
-const delListButton = document.getElementById("delListButton");
 const addListConfirm = document.getElementById("addListConfirm");
+const delListButton = document.getElementById("delListButton");
 
 const notesContentField = document.getElementById("notesContentField");
 const addNoteButton = document.getElementById("addNoteButton");
@@ -13,6 +13,8 @@ const delNoteButton = document.getElementById("delNoteButton");
 
 const listsTable = document.getElementById("result1");
 const notesTable = document.getElementById("result2");
+const listFilterSelect = document.getElementById("listFilterSelect");
+const addNoteSection = document.getElementById("addNoteSection");
 
 const resetBtn = document.getElementById("resetBtn");
 
@@ -21,65 +23,85 @@ resetBtn.addEventListener("click", reset);
 /* PULIZIA CAMPI */
 function clear(string) {
     const hid = document.querySelectorAll(".toHide");
-
-    hid.forEach((value, index) => {
-        hid[index].classList.add("hidden");
-    });
+    hid.forEach((el) => el.classList.add("hidden"));
 
     if (string == "reset") {
         addListButton.classList.remove("hidden");
     } else if (string == "addList") {
         listNameField.classList.remove("hidden");
         addListConfirm.classList.remove("hidden");
-    } else if (string == "addNote") {
-        notesContentField.classList.remove("hidden");
-        addNoteButton.classList.remove("hidden");
     }
 }
+
+let idLista = null;
+let allChecklists = [];
+
+/* DROPDOWN FILTER */
+function populateDropdown(checklists) {
+    const prev = listFilterSelect.value;
+    listFilterSelect.innerHTML = '<option value="">Tutte le liste</option>';
+    checklists.forEach((cl) => {
+        const opt = document.createElement("option");
+        opt.value = cl.id;
+        opt.textContent = cl.name;
+        listFilterSelect.append(opt);
+    });
+    // ripristina selezione se ancora esiste
+    if (prev && checklists.find((cl) => String(cl.id) === prev)) {
+        listFilterSelect.value = prev;
+        idLista = parseInt(prev);
+    } else {
+        listFilterSelect.value = "";
+        idLista = null;
+    }
+    updateAddNoteVisibility();
+}
+
+function updateAddNoteVisibility() {
+    if (idLista) {
+        addNoteSection.classList.remove("hidden");
+        const selected = allChecklists.find((cl) => cl.id === idLista);
+        document.getElementById("addNoteLabel").textContent = selected
+            ? `Aggiungi nota a "${selected.name}"`
+            : "Aggiungi nota";
+    } else {
+        addNoteSection.classList.add("hidden");
+    }
+}
+
+listFilterSelect.addEventListener("change", () => {
+    idLista = listFilterSelect.value ? parseInt(listFilterSelect.value) : null;
+    updateAddNoteVisibility();
+    renderFilteredNotes();
+});
 
 /* CHIAMATE GET */
 async function getChecklists() {
     listsTable.innerHTML = "";
 
     const trH = document.createElement("tr");
-    const thId = document.createElement("th");
     const thName = document.createElement("th");
     const thDel = document.createElement("th");
-
-    thId.textContent = "ID Lista";
     thName.textContent = "Nome Lista";
     thDel.textContent = "Elimina";
-
-    trH.append(thId, thName, thDel);
+    trH.append(thName, thDel);
     listsTable.append(trH);
 
     const data = await apiRequest(API_HOST + "/checklists", "GET", null);
+    allChecklists = Array.from(data);
 
-    Array.from(data).forEach((value, index) => {
+    allChecklists.forEach((value) => {
         const tr = document.createElement("tr");
-        const tdId = document.createElement("td");
         const tdName = document.createElement("td");
         const tdDel = document.createElement("td");
 
-        tdId.textContent = value.id;
-        tdId.style.cursor = "pointer";
-        tdId.title =
-            "al click: mostra i campi per aggiungere una nota per la lista cliccata";
-        tdId.addEventListener("click", () => {
-            clear("addNote");
-            idLista = value.id;
-        });
-
-        // Click sul nome per modificarlo inline
         tdName.textContent = value.name;
         tdName.style.cursor = "text";
         tdName.title = "al click: modifica il nome della lista";
         tdName.addEventListener("click", () => {
             if (tdName.querySelector("input")) return;
-
             const oldName = tdName.textContent;
             tdName.innerHTML = "";
-
             const input = document.createElement("input");
             input.type = "text";
             input.value = oldName;
@@ -88,33 +110,23 @@ async function getChecklists() {
 
             input.addEventListener("keydown", async (e) => {
                 if (e.key === "Enter") {
-                    //premi invio => fa la put solo se non è nullo e diverso dal vecchio
                     if (input.value === "" || input.value === oldName) {
                         tdName.textContent = oldName;
                         return;
                     }
-
-                    const body = { name: input.value };
                     await apiRequest(
                         API_HOST + "/checklists/" + value.id,
                         "PUT",
-                        body,
+                        { name: input.value },
                     );
-
                     await getChecklists();
+                    populateDropdown(allChecklists);
                 }
-
-                if (e.key === "Escape") {
-                    // premi esc => ritorna al nome iniziale
-                    tdName.textContent = oldName;
-                }
+                if (e.key === "Escape") tdName.textContent = oldName;
             });
 
             input.addEventListener("blur", () => {
-                // Se l'input è ancora lì (nessun Enter premuto), ripristina
-                if (tdName.querySelector("input")) {
-                    tdName.textContent = oldName;
-                }
+                if (tdName.querySelector("input")) tdName.textContent = oldName;
             });
         });
 
@@ -122,67 +134,62 @@ async function getChecklists() {
         delBtn.type = "button";
         delBtn.value = "x";
         delBtn.style.cursor = "pointer";
-
         delBtn.addEventListener("click", async () => {
-
-            body = { paranoid: 1 };
-            await apiRequest(
-                API_HOST + "/checklists/" + value.id,
-                "PUT",
-                body,
-            );
-
-            await getChecklists();
-            await getNotes();
+            await apiRequest(API_HOST + "/checklists/" + value.id, "PUT", {
+                paranoid: 1,
+            });
             await reset();
         });
 
         tdDel.append(delBtn);
-
-        tr.append(tdId, tdName, tdDel);
+        tr.append(tdName, tdDel);
         listsTable.append(tr);
     });
+
+    populateDropdown(allChecklists);
 }
 
+let allNotes = [];
+
 async function getNotes() {
+    const data = await apiRequest(API_HOST + "/notes", "GET", null);
+    allNotes = Array.from(data);
+    renderFilteredNotes();
+}
+
+function renderFilteredNotes() {
     notesTable.innerHTML = "";
 
     const trH = document.createElement("tr");
-    const thId = document.createElement("th");
     const thName = document.createElement("th");
     const thLista = document.createElement("th");
     const thTodo = document.createElement("th");
     const thDel = document.createElement("th");
-
-    thId.textContent = "ID Nota";
     thName.textContent = "Contenuto Nota";
-    thLista.textContent = "ID Lista";
+    thLista.textContent = "Lista";
     thTodo.textContent = "ToDo";
     thDel.textContent = "Elimina";
-
-    trH.append(thId, thName, thLista, thTodo, thDel);
+    trH.append(thName, thLista, thTodo, thDel);
     notesTable.append(trH);
 
-    const data = await apiRequest(API_HOST + "/notes", "GET", null);
-    // console.log(typeof data); --> OBJECT
-    Array.from(data).forEach((value, index) => {
+    const filtered = idLista
+        ? allNotes.filter((n) => n.checklist_id === idLista)
+        : allNotes;
+
+    filtered.forEach((value) => {
         const tr = document.createElement("tr");
-        const tdId = document.createElement("td");
         const tdName = document.createElement("td");
         const tdLista = document.createElement("td");
         const tdTodo = document.createElement("td");
         const tdDel = document.createElement("td");
 
-        tdId.textContent = value.id;
         tdName.textContent = value.content;
         tdName.style.cursor = "pointer";
-        tdName.title = "al click: cambia nome della nota";
+        tdName.title = "al click: cambia contenuto della nota";
         tdName.addEventListener("click", () => {
             if (tdName.querySelector("input")) return;
-
             const oldContent = tdName.textContent;
             tdName.innerHTML = "";
-
             const input = document.createElement("input");
             input.type = "text";
             input.value = oldContent;
@@ -191,54 +198,33 @@ async function getNotes() {
 
             input.addEventListener("keydown", async (e) => {
                 if (e.key === "Enter") {
-                    //premi invio => fa la put solo se non è nullo e diverso dal vecchio
                     if (input.value === "" || input.value === oldContent) {
                         tdName.textContent = oldContent;
                         return;
                     }
-
-                    const body = { content: input.value };
-                    await apiRequest(
-                        API_HOST + "/notes/" + value.id,
-                        "PUT",
-                        body,
-                    );
-
+                    await apiRequest(API_HOST + "/notes/" + value.id, "PUT", {
+                        content: input.value,
+                    });
                     await getNotes();
                 }
+                if (e.key === "Escape") tdName.textContent = oldContent;
+            });
 
-                if (e.key === "Escape") {
-                    // premi esc => ritorna al nome iniziale
+            input.addEventListener("blur", () => {
+                if (tdName.querySelector("input")) {
                     tdName.textContent = oldContent;
                 }
             });
         });
 
-        tdLista.textContent = value.checklist_id;
+        tdLista.textContent = value.checklist ? value.checklist.name : "—";
 
         tdTodo.textContent = value.todo;
         tdTodo.style.cursor = "pointer";
         tdTodo.title = "al click: segna la nota come fatta/da fare";
         tdTodo.addEventListener("click", async () => {
-            if (value.todo == "todo") {
-                const body = {
-                    todo: "done",
-                };
-                await apiRequest(
-                    API_HOST + "/notes/" + value.id,
-                    "PUT",
-                    body,
-                );
-            } else {
-                const body = {
-                    todo: "todo",
-                };
-                await apiRequest(
-                    API_HOST + "/notes/" + value.id,
-                    "PUT",
-                    body,
-                );
-            }
+            const body = { todo: value.todo == "todo" ? "done" : "todo" };
+            await apiRequest(API_HOST + "/notes/" + value.id, "PUT", body);
             await getNotes();
         });
 
@@ -246,21 +232,15 @@ async function getNotes() {
         delBtn.type = "button";
         delBtn.value = "x";
         delBtn.style.cursor = "pointer";
-
         delBtn.addEventListener("click", async () => {
-
-            body = { paranoid: 1 };
-
-            await apiRequest(API_HOST + "/notes/" + value.id, "PUT", body);
-
-            await getChecklists();
+            await apiRequest(API_HOST + "/notes/" + value.id, "PUT", {
+                paranoid: 1,
+            });
             await getNotes();
-            await reset();
         });
 
         tdDel.append(delBtn);
-
-        tr.append(tdId, tdName, tdLista, tdTodo, tdDel);
+        tr.append(tdName, tdLista, tdTodo, tdDel);
         notesTable.append(tr);
     });
 }
@@ -275,25 +255,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     await reset();
 });
 
-let idLista;
-
 /* CHIAMATE POST */
 addNoteButton.addEventListener("click", async () => {
-    if (notesContentField.value == "")
-        return console.log("contenuto nota non valido!");
+    if (!notesContentField.value) return;
+    if (!idLista) return;
 
-    body = {
+    await apiRequest(API_HOST + "/notes", "POST", {
         content: notesContentField.value,
         todo: "todo",
         checklist_id: idLista,
         paranoid: 0,
-    };
-
-    await apiRequest(API_HOST + "/notes", "POST", body);
+    });
 
     notesContentField.value = "";
-
-    await reset();
+    await getNotes();
 });
 
 addListButton.addEventListener("click", () => {
@@ -301,33 +276,24 @@ addListButton.addEventListener("click", () => {
 });
 
 addListConfirm.addEventListener("click", async () => {
-    if (listNameField.value == "") return console.log("nome lista non valido!");
+    if (!listNameField.value) return;
 
-    body = {
+    await apiRequest(API_HOST + "/checklists", "POST", {
         name: listNameField.value,
         paranoid: 0,
-    };
-
-    await apiRequest(API_HOST + "/checklists", "POST", body);
+    });
 
     listNameField.value = "";
-
     await reset();
 });
 
-/* ------------------- API REQUEST DEFINITION ---------------------- */
+/* API REQUEST */
 async function apiRequest(url, method, data) {
     const options = {
         method,
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
     };
-
-    if (method !== "GET" && data) {
-        options.body = JSON.stringify(data);
-    }
-
+    if (method !== "GET" && data) options.body = JSON.stringify(data);
     try {
         const response = await fetch(url, options);
         return await response.json();
