@@ -1,6 +1,12 @@
 const PORT = 8000;
 const API_HOST = "http://localhost:" + PORT + "/api";
 
+/* AUTH GUARD — se non loggato, vai al login */
+const sanctumToken = localStorage.getItem("sanctum_token");
+if (!sanctumToken) {
+  window.location.href = "./auth/login.html";
+}
+
 /* COSTANTI */
 const listNameField = document.getElementById("listNameField");
 const addListButton = document.getElementById("addListButton");
@@ -289,15 +295,45 @@ addListConfirm.addEventListener("click", async () => {
 
 /* API REQUEST */
 async function apiRequest(url, method, data) {
+    const token = localStorage.getItem("sanctum_token");
     const options = {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { "Authorization": "Bearer " + token } : {}),
+        },
     };
     if (method !== "GET" && data) options.body = JSON.stringify(data);
     try {
         const response = await fetch(url, options);
+        if (response.status === 401) {
+            localStorage.removeItem("sanctum_token");
+            localStorage.removeItem("user_name");
+            window.location.href = "./auth/login.html";
+            return;
+        }
         return await response.json();
     } catch (err) {
         throw err;
     }
 }
+
+/* LOGOUT */
+async function logout() {
+    try {
+        await apiRequest(API_HOST + "/logout", "POST", null);
+    } finally {
+        localStorage.removeItem("sanctum_token");
+        localStorage.removeItem("user_name");
+        window.location.href = "./auth/login.html";
+    }
+}
+/* INIT USER LABEL + LOGOUT BTN */
+document.addEventListener("DOMContentLoaded", () => {
+    const name = localStorage.getItem("user_name");
+    const label = document.getElementById("userLabel");
+    if (label && name) label.textContent = name;
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) logoutBtn.addEventListener("click", logout);
+});

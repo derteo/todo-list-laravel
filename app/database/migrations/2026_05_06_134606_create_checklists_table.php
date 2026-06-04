@@ -12,6 +12,10 @@ return new class extends Migration
             $table->id();
             $table->string("name");
             $table->integer("paranoid");
+            $table->foreignId('user_id')
+                ->constrained()
+                ->restrictOnDelete()
+                ->cascadeOnUpdate();
             $table->timestamps();
         });
     }

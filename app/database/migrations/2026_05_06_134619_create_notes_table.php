@@ -14,9 +14,13 @@ return new class extends Migration
             $table->string("todo");
             $table->integer("paranoid");
             $table->foreignId("checklist_id")
-            ->constrained()
-            ->restrictOnDelete()
-            ->cascadeOnUpdate();
+                ->constrained()
+                ->restrictOnDelete()
+                ->cascadeOnUpdate();
+            $table->foreignId("user_id")
+                ->constrained()
+                ->restrictOnDelete()
+                ->cascadeOnUpdate();
             $table->timestamps();
         });
     }
