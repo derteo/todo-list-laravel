@@ -1,5 +1,4 @@
-const PORT = 8000;
-const API_HOST = "http://localhost:" + PORT + "/api";
+const API_HOST = "/api";
 
 // se già loggato, vai direttamente all'app
 if (localStorage.getItem("sanctum_token")) {

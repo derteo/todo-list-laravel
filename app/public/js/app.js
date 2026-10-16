@@ -1,5 +1,4 @@
-const PORT = 8000;
-const API_HOST = "http://localhost:" + PORT + "/api";
+const API_HOST = "/api";
 
 /* AUTH GUARD — se non loggato, vai al login */
 const sanctumToken = localStorage.getItem("sanctum_token");
