@@ -22,3 +22,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('checklists', ChecklistController::class);
     Route::apiResource('notes',      NoteController::class);
 });
+
+// Controllo di stato: 200 solo se il database è raggiungibile
+Route::get('/health', function () {
+    try {
+        \Illuminate\Support\Facades\DB::select('select 1');
+        return response()->json(['status' => 'ok']);
+    } catch (\Throwable $e) {
+        return response()->json(['status' => 'error'], 503);
+    }
+});
